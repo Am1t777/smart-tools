@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>מחסן כלים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: oklch(97% 0.008 60);
+    --surface: oklch(100% 0 0);
+    --text: oklch(18% 0.012 260);
+    --text-muted: oklch(52% 0.012 260);
+    --accent: oklch(62% 0.175 48);
+    --accent-dark: oklch(52% 0.16 48);
+    --accent-light: oklch(95% 0.045 60);
+    --success: oklch(58% 0.16 148);
+    --success-light: oklch(94% 0.05 148);
+    --danger: oklch(57% 0.18 25);
+    --danger-light: oklch(94% 0.05 25);
+    --admin: oklch(58% 0.18 280);
+    --admin-light: oklch(95% 0.04 280);
+    --border: oklch(90% 0.01 60);
+    --radius: 18px;
+    --radius-sm: 10px;
+    --shadow: 0 2px 20px oklch(18% 0.01 260 / 0.1);
+    --shadow-lg: 0 8px 40px oklch(18% 0.01 260 / 0.14);
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'Heebo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  /* ── SCREEN SYSTEM ── */
+  .screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transform: translateY(24px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    overflow-y: auto;
+  }
+  .screen.active {
+    opacity: 1; pointer-events: all; transform: translateY(0);
+  }
+  .screen.exit {
+    opacity: 0; transform: translateY(-24px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  /* ── HEADER BAR ── */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px 12px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
+    flex-shrink: 0;
+  }
+  .header-logo {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .header-logo-icon {
+    width: 34px; height: 34px;
+    background: var(--accent);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .header-logo-icon svg { width: 18px; height: 18px; fill: white; }
+  .header-title { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); transition: all 0.15s;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  /* ── CONTENT AREA ── */
+  .content {
+    flex: 1; display: flex; flex-direction: column;
+    padding: 28px 20px 32px;
+    gap: 20px;
+  }
+  .content-center {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 28px 20px 32px;
+    gap: 20px; text-align: center;
+  }
+
+  /* ── STEP INDICATOR ── */
+  .steps {
+    display: flex; gap: 6px; justify-content: center;
+    padding: 12px 20px 0;
+  }
+  .step-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); transition: all 0.3s;
+  }
+  .step-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+  .step-dot.done { background: var(--accent); opacity: 0.4; }
+
+  /* ── TYPOGRAPHY ── */
+  .screen-heading { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2; }
+  .screen-sub { font-size: 15px; color: var(--text-muted); line-height: 1.6; }
+
+  /* ── INPUT ── */
+  .input-group { display: flex; flex-direction: column; gap: 8px; }
+  .input-label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+  .input-field {
+    width: 100%; padding: 16px 18px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 17px; font-weight: 500;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    outline: none; transition: border-color 0.2s;
+    text-align: right;
+  }
+  .input-field:focus { border-color: var(--accent); }
+  .input-field::placeholder { color: var(--border); font-weight: 400; }
+
+  /* ── BUTTON ── */
+  .btn {
+    width: 100%; padding: 17px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 16px; font-weight: 700;
+    border: none; border-radius: var(--radius);
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary {
+    background: var(--accent); color: white;
+  }
+  .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-ghost {
+    background: transparent; color: var(--text-muted);
+    border: 1.5px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-admin {
+    background: var(--admin-light); color: var(--admin);
+    border: 1.5px solid oklch(85% 0.06 280);
+  }
+  .btn-admin:hover { background: var(--admin); color: white; }
+  .btn svg { width: 20px; height: 20px; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+
+  /* ── ADMIN BADGE ── */
+  .admin-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 999px;
+    background: var(--admin-light); color: var(--admin);
+    font-size: 12px; font-weight: 700;
+    border: 1px solid oklch(85% 0.06 280);
+  }
+  .admin-badge svg { width: 13px; height: 13px; fill: var(--admin); }
+
+  /* ── SCREEN 1: NAME ── */
+  #screen-name .welcome-icon {
+    width: 72px; height: 72px; border-radius: 20px;
+    background: var(--accent-light);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto;
+  }
+  #screen-name .welcome-icon svg { width: 36px; height: 36px; fill: var(--accent); }
+
+  /* ── SCREEN 2: SCANNER ── */
+  .scan-frame-wrapper {
+    position: relative;
+    width: 100%; max-width: 340px; margin: 0 auto;
+  }
+  #qr-reader {
+    width: 100% !important;
+    border-radius: var(--radius) !important;
+    overflow: hidden;
+    border: none !important;
+  }
+  #qr-reader video { border-radius: var(--radius); }
+  #qr-reader__scan_region { border-radius: var(--radius) !important; }
+  #qr-reader__scan_region img { display: none !important; }
+  #qr-reader__dashboard { display: none !important; }
+
+  .scan-status {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border-radius: 999px;
+    font-size: 14px; font-weight: 600;
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .status-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--success);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  /* ── SCREEN 3: QUANTITY ── */
+  .tool-card {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 20px; border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .tool-card-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+  }
+  .tool-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: var(--accent-light);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .tool-icon svg { width: 26px; height: 26px; fill: var(--accent); }
+  .tool-name { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+  .tool-stock {
+    font-size: 13px; color: var(--text-muted); margin-top: 3px;
+  }
+  .stock-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    background: var(--success-light); color: var(--success);
+  }
+  .stock-badge.low { background: oklch(94% 0.05 50); color: var(--accent); }
+  .stock-badge.empty { background: var(--danger-light); color: var(--danger); }
+
+  .qty-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 8px;
+  }
+  .qty-btn {
+    width: 52px; height: 52px; border-radius: 14px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    font-size: 24px; font-weight: 300; color: var(--text);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+  .qty-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .qty-btn:active { transform: scale(0.95); }
+  .qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .qty-display {
+    flex: 1; text-align: center;
+    font-size: 42px; font-weight: 800;
+    color: var(--text); letter-spacing: -1px;
+  }
+  .qty-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+
+  /* ── SCREEN 4: SUCCESS ── */
+  .success-icon {
+    width: 88px; height: 88px; border-radius: 50%;
+    background: var(--success-light);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto;
+    animation: pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes pop {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .success-icon svg { width: 44px; height: 44px; fill: var(--success); }
+  .summary-card {
+    background: var(--success-light); border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 14px;
+  }
+  .summary-row .label { color: var(--text-muted); font-weight: 500; }
+  .summary-row .value { font-weight: 700; }
+
+  /* ── MODAL ── */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: oklch(0% 0 0 / 0.5);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: flex-end;
+    z-index: 100;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .modal-backdrop.open { opacity: 1; pointer-events: all; }
+  .modal-sheet {
+    width: 100%; background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 12px 20px 40px;
+    max-height: 90vh; overflow-y: auto;
+    transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.34,1.1,0.64,1);
+  }
+  .modal-backdrop.open .modal-sheet { transform: translateY(0); }
+  .modal-handle {
+    width: 40px; height: 4px; border-radius: 2px;
+    background: var(--border); margin: 0 auto 20px;
+  }
+  .modal-title { font-size: 20px; font-weight: 800; margin-bottom: 20px; }
+  .modal-close-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 20px;
+    background: var(--bg); border-radius: var(--radius-sm);
+    padding: 4px;
+  }
+  .tab {
+    flex: 1; padding: 9px; border-radius: 8px;
+    border: none; background: transparent;
+    font-family: 'Heebo', sans-serif;
+    font-size: 12px; font-weight: 600;
+    color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+  }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+
+  /* ── ADMIN TOOL LIST ── */
+  .admin-tool-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+  }
+  .admin-tool-item:last-child { border-bottom: none; }
+  .admin-tool-info { flex: 1; }
+  .admin-tool-name { font-size: 15px; font-weight: 700; }
+  .admin-tool-qty { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .qr-preview-btn {
+    padding: 8px 14px; border-radius: var(--radius-sm);
+    background: var(--accent-light); color: var(--accent);
+    border: 1.5px solid oklch(88% 0.06 60);
+    font-family: 'Heebo', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .qr-preview-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* ── QR OUTPUT ── */
+  .qr-canvas-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  #qr-canvas canvas, #qr-canvas img { border-radius: 12px; }
+  .qr-label { font-size: 18px; font-weight: 700; text-align: center; }
+  .qr-id { font-size: 12px; color: var(--text-muted); text-align: center; }
+
+  /* ── CONNECTION STATUS ── */
+  .conn-status {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600;
+    border: 1.5px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .conn-status.connected { background: var(--success-light); border-color: oklch(80% 0.08 148); color: var(--success); }
+  .conn-status.disconnected { background: var(--danger-light); border-color: oklch(80% 0.08 25); color: var(--danger); }
+  .conn-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .conn-status.connected .conn-dot { background: var(--success); }
+  .conn-status.disconnected .conn-dot { background: var(--danger); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px; background: var(--border); margin: 4px 0;
+  }
+
+  /* ── LOADING ── */
+  .spinner {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite; margin: 0 auto;
+  }
+  .spinner.sm { width: 22px; height: 22px; border-width: 2.5px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: oklch(25% 0.01 260); color: white;
+    padding: 12px 20px; border-radius: 999px;
+    font-size: 14px; font-weight: 600;
+    transition: transform 0.3s; z-index: 200;
+    white-space: nowrap; max-width: 90vw;
+    text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ─────────────────────────────────────
+     SCREEN 1 – NAME INPUT
+───────────────────────────────────── -->
+<div id="screen-name" class="screen active">
+  <div class="header">
+    <div class="header-logo">
+      <div class="header-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
+      </div>
+      <div>
+        <div class="header-title">מחסן כלים</div>
+        <div class="header-subtitle">מערכת ניהול כלים ושאלות</div>
+      </div>
+    </div>
+    <div style="width:38px;"></div>
+  </div>
+
+  <div class="steps">
+    <div class="step-dot active"></div>
+    <div class="step-dot"></div>
+    <div class="step-dot"></div>
+  </div>
+
+  <div class="content" style="justify-content: space-between;">
+    <div style="display:flex;flex-direction:column;gap:24px;">
+      <div class="welcome-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+      </div>
+      <div>
+        <div class="screen-heading">שלום!<br>מי אתה?</div>
+        <div class="screen-sub" style="margin-top:8px;">הכנס את שמך כדי שנוכל לתעד את השאלת הכלים</div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">שם מלא</div>
+        <input
+          class="input-field"
+          id="name-input"
+          type="text"
+          placeholder="ישראל ישראלי"
+          autocomplete="name"
+          onkeyup="checkNameInput()"
+          onkeydown="if(event.key==='Enter')startScan()"
+        >
+      </div>
+    </div>
+    <button class="btn btn-primary" id="btn-start" onclick="startScan()" disabled>
+      המשך לסריקה
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" transform="rotate(180 12 12)"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────
+     SCREEN 2 – QR SCANNER
+───────────────────────────────────── -->
+<div id="screen-scanner" class="screen">
+  <div class="header">
+    <div class="header-logo">
+      <div class="header-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
+      </div>
+      <div>
+        <div class="header-title">סריקת כלי</div>
+        <div class="header-subtitle" id="scanner-greeting">שלום</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="icon-btn" id="btn-settings" onclick="openSetup()" title="הגדרות" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+      <button class="icon-btn" onclick="goBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step-dot done"></div>
+    <div class="step-dot active"></div>
+    <div class="step-dot"></div>
+  </div>
+
+  <div class="content-center" style="gap:20px;">
+    <div>
+      <div class="screen-heading">סרוק את ה-QR</div>
+      <div class="screen-sub" style="margin-top:8px;">כוון את מצלמת הטלפון אל קוד ה-QR המודבק על הכלי</div>
+    </div>
+
+    <!-- Camera permission prompt -->
+    <div id="camera-prompt" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:300px;">
+      <div style="width:80px;height:80px;border-radius:50%;background:var(--accent-light);display:flex;align-items:center;justify-content:center;">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 15.2A3.2 3.2 0 1 0 12 8.8a3.2 3.2 0 0 0 0 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:17px;font-weight:700;">הפעל מצלמה</div>
+        <div style="font-size:14px;color:var(--text-muted);margin-top:6px;">נדרשת הרשאה כדי לאפשר את סריקת הכלים</div>
+      </div>
+      <button class="btn btn-primary" style="max-width:240px;" onclick="activateCamera()">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 15.2A3.2 3.2 0 1 0 12 8.8a3.2 3.2 0 0 0 0 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+        הפעל מצלמה
+      </button>
+    </div>
+
+    <!-- Active scanner (shown after permission) -->
+    <div id="camera-active" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:340px;">
+      <div class="scan-frame-wrapper">
+        <div id="qr-reader"></div>
+      </div>
+      <div class="scan-status" id="scan-status">
+        <div class="status-dot"></div>
+        <span>ממתין לסריקה...</span>
+      </div>
+    </div>
+
+    <!-- Admin button (shown only for admins) -->
+    <button
+      class="btn btn-admin"
+      id="btn-admin-panel"
+      onclick="openAdminModal()"
+      style="display:none;max-width:260px;"
+    >
+      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5z"/></svg>
+      ניהול כלים (מנהל)
+    </button>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────
+     SCREEN 3 – QUANTITY
+───────────────────────────────────── -->
+<div id="screen-quantity" class="screen">
+  <div class="header">
+    <div class="header-logo">
+      <div class="header-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
+      </div>
+      <div>
+        <div class="header-title">כמות השאלה</div>
+        <div class="header-subtitle">כמה יחידות תרצה לקחת?</div>
+      </div>
+    </div>
+    <button class="icon-btn" onclick="goToScan()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+  </div>
+
+  <div class="steps">
+    <div class="step-dot done"></div>
+    <div class="step-dot done"></div>
+    <div class="step-dot active"></div>
+  </div>
+
+  <div class="content" style="justify-content: space-between;">
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <div class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon">
+            <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
+          </div>
+          <div>
+            <div class="tool-name" id="tool-name-display">טוען...</div>
+            <div class="tool-stock" id="tool-stock-badge"></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="qty-label">כמות לקיחה</div>
+        <div class="qty-row">
+          <button class="qty-btn" id="qty-minus" onclick="changeQty(-1)">−</button>
+          <div class="qty-display" id="qty-display">1</div>
+          <button class="qty-btn" id="qty-plus" onclick="changeQty(1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-primary" id="btn-confirm" onclick="confirmCheckout()">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        אשר השאלה
+      </button>
+      <button class="btn btn-ghost" onclick="goToScan()">סרוק כלי אחר</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────
+     SCREEN 4 – SUCCESS
+───────────────────────────────────── -->
+<div id="screen-success" class="screen">
+  <div class="header">
+    <div class="header-logo">
+      <div class="header-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
+      </div>
+      <div>
+        <div class="header-title">מחסן כלים</div>
+        <div class="header-subtitle">השאלה הושלמה</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-center">
+    <div class="success-icon">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    </div>
+    <div>
+      <div class="screen-heading">השאלה נרשמה!</div>
+      <div class="screen-sub" style="margin-top:8px;">הפרטים נשמרו והכלים מחכים לך במחסן</div>
+    </div>
+
+    <div class="summary-card" style="width:100%;">
+      <div class="summary-row">
+        <span class="label">שם</span>
+        <span class="value" id="success-name">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">כלי</span>
+        <span class="value" id="success-tool">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">כמות שנלקחה</span>
+        <span class="value" id="success-qty">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">תאריך ושעה</span>
+        <span class="value" id="success-time">—</span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;">
+      <button class="btn btn-primary" onclick="goToScan()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        סרוק כלי נוסף
+      </button>
+      <button class="btn btn-ghost" onclick="restart()">התחיל מחדש</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────
+     MODAL – ADMIN PANEL
+───────────────────────────────────── -->
+<div class="modal-backdrop" id="admin-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-close-row">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="modal-title" style="margin-bottom:0;">לוח מנהל</div>
+        <span class="admin-badge">
+          <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+          מנהל
+        </span>
+      </div>
+      <button class="icon-btn" onclick="closeAdminModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-list"    onclick="switchAdminTab('list')">רשימת כלים</button>
+      <button class="tab"        id="tab-add"     onclick="switchAdminTab('add')">הוסף כלי</button>
+      <button class="tab"        id="tab-qr"      onclick="switchAdminTab('qr')">צור QR</button>
+    </div>
+
+    <!-- Tab 1: Tool list -->
+    <div id="tab-list-content">
+      <div id="admin-tool-list">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Add tool -->
+    <div id="tab-add-content" style="display:none;">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="input-group">
+          <div class="input-label">שם הכלי</div>
+          <input class="input-field" id="add-tool-name" type="text" placeholder="לדוגמה: מברג פיליפס" style="font-size:16px;">
+        </div>
+        <div class="input-group">
+          <div class="input-label">כמות התחלתית</div>
+          <input class="input-field" id="add-tool-qty" type="number" min="1" value="1" placeholder="1" style="font-size:16px;text-align:center;">
+        </div>
+        <button class="btn btn-primary" id="btn-add-tool" onclick="addNewTool()">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          הוסף לרשימה
+        </button>
+        <div id="add-tool-result" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Tab 3: QR creator -->
+    <div id="tab-qr-content" style="display:none;">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="input-group">
+          <div class="input-label">בחר כלי מהרשימה</div>
+          <select class="input-field" id="qr-tool-select" onchange="generateQRPreview()" style="font-size:15px;">
+            <option value="">— בחר כלי —</option>
+          </select>
+        </div>
+        <div id="qr-output" style="display:none;">
+          <div class="card qr-canvas-wrapper" style="margin-top:4px;">
+            <div id="qr-canvas"></div>
+            <div class="qr-label" id="qr-tool-label">—</div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="downloadQR()">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            הורד QR
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────
+     MODAL – SETUP
+───────────────────────────────────── -->
+<div class="modal-backdrop" id="setup-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-close-row">
+      <div class="modal-title" style="margin-bottom:0;">הגדרת Google Sheets</div>
+      <button class="icon-btn" onclick="closeSetup()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div id="setup-conn-status" class="conn-status disconnected">
+      <div class="conn-dot"></div>
+      <span id="setup-conn-text">לא מחובר</span>
+    </div>
+
+    <div class="input-group" style="margin-bottom:16px;">
+      <div class="input-label">Apps Script URL</div>
+      <input class="input-field" id="setup-url-input" type="url"
+        placeholder="https://script.google.com/macros/s/..."
+        style="font-size:13px; direction:ltr; text-align:left;"
+      >
+    </div>
+
+    <button class="btn btn-primary" onclick="saveSetup()">שמור</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ──────────────────────────────────────
+// STATE
+// ──────────────────────────────────────
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx-q9QdVnuHOt3MCUrhRS5m5IrQgJHat07Dk163cUbT3CrjfTyZEvBkQ9WWeZr60AA/exec';
+
+let state = {
+  userName: '',
+  isAdmin: false,
+  toolId: null,
+  toolName: '',
+  toolQty: 0,
+  selectedQty: 1,
+  scriptUrl: localStorage.getItem('scriptUrl') || DEFAULT_SCRIPT_URL,
+};
+
+// ──────────────────────────────────────
+// SCREEN NAVIGATION
+// ──────────────────────────────────────
+let currentScreen = 'screen-name';
+let qrScanner = null;
+
+function showScreen(id) {
+  const cur = document.getElementById(currentScreen);
+  const next = document.getElementById(id);
+  cur.classList.add('exit');
+  setTimeout(() => {
+    cur.classList.remove('active', 'exit');
+    next.classList.add('active');
+    currentScreen = id;
+  }, 200);
+}
+
+// ──────────────────────────────────────
+// SCREEN 1: NAME
+// ──────────────────────────────────────
+function checkNameInput() {
+  const val = document.getElementById('name-input').value.trim();
+  document.getElementById('btn-start').disabled = val.length < 2;
+}
+
+async function startScan() {
+  const name = document.getElementById('name-input').value.trim();
+  if (name.length < 2) return;
+
+  const btn = document.getElementById('btn-start');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner sm"></div>';
+
+  state.userName = name;
+  state.isAdmin = await checkIsAdmin(name);
+
+  btn.innerHTML = 'המשך לסריקה <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" transform="rotate(180 12 12)"/></svg>';
+  btn.disabled = false;
+
+  document.getElementById('scanner-greeting').textContent = `שלום, ${name.split(' ')[0]}`;
+  document.getElementById('btn-admin-panel').style.display = state.isAdmin ? '' : 'none';
+  document.getElementById('btn-settings').style.display = state.isAdmin ? '' : 'none';
+
+  showScreen('screen-scanner');
+  resetCameraPrompt();
+}
+
+function goBack() {
+  stopScanner();
+  showScreen('screen-name');
+}
+
+function resetCameraPrompt() {
+  document.getElementById('camera-prompt').style.display = 'flex';
+  document.getElementById('camera-active').style.display = 'none';
+}
+
+function activateCamera() {
+  document.getElementById('camera-prompt').style.display = 'none';
+  document.getElementById('camera-active').style.display = 'flex';
+  initScanner();
+}
+
+// ──────────────────────────────────────
+// SCREEN 2: QR SCANNER
+// ──────────────────────────────────────
+function initScanner() {
+  if (qrScanner) return;
+  const readerEl = document.getElementById('qr-reader');
+  readerEl.innerHTML = '';
+  qrScanner = new Html5Qrcode('qr-reader');
+  qrScanner.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1 },
+    onQRScanned,
+    () => {}
+  ).catch(() => {
+    document.getElementById('scan-status').innerHTML =
+      '<span style="color:var(--danger);">לא ניתן לגשת למצלמה. בדוק הרשאות.</span>';
+  });
+}
+
+function stopScanner() {
+  if (qrScanner) {
+    qrScanner.stop().catch(() => {});
+    qrScanner = null;
+  }
+}
+
+function goToScan() {
+  stopScanner();
+  showScreen('screen-scanner');
+  setTimeout(resetCameraPrompt, 200);
+}
+
+async function onQRScanned(text) {
+  stopScanner();
+  document.getElementById('scan-status').innerHTML =
+    `<div class="spinner sm" style="margin:0;"></div><span>טוען פרטי כלי...</span>`;
+  showScreen('screen-quantity');
+
+  const toolId = text.startsWith('TOOL:') ? text.slice(5) : text;
+  const tool = await fetchTool(toolId);
+
+  if (!tool || tool.error) {
+    showToast('הכלי לא נמצא — בדוק את קוד ה-QR');
+    goToScan();
+    return;
+  }
+
+  state.toolId = tool.id;
+  state.toolName = tool.name;
+  state.toolQty = Number(tool.qty);
+  state.selectedQty = 1;
+
+  renderToolCard();
+}
+
+// ──────────────────────────────────────
+// SCREEN 3: QUANTITY
+// ──────────────────────────────────────
+function renderToolCard() {
+  document.getElementById('tool-name-display').textContent = state.toolName;
+  document.getElementById('btn-confirm').disabled = false;
+
+  const qty = state.toolQty;
+  let badgeClass = 'stock-badge';
+  let badgeText = '';
+  if (qty <= 0) {
+    badgeClass += ' empty';
+    badgeText = '✕ אין מלאי';
+    document.getElementById('btn-confirm').disabled = true;
+  } else if (qty <= 3) {
+    badgeClass += ' low';
+    badgeText = `⚠ ${qty} יחידות נותרו`;
+  } else {
+    badgeText = `✓ ${qty} יחידות במלאי`;
+  }
+
+  document.getElementById('tool-stock-badge').innerHTML =
+    `<span class="${badgeClass}">${badgeText}</span>`;
+
+  document.getElementById('qty-display').textContent = state.selectedQty;
+  updateQtyButtons();
+}
+
+function changeQty(delta) {
+  const next = state.selectedQty + delta;
+  if (next < 1 || next > state.toolQty) return;
+  state.selectedQty = next;
+  document.getElementById('qty-display').textContent = next;
+  updateQtyButtons();
+}
+
+function updateQtyButtons() {
+  document.getElementById('qty-minus').disabled = state.selectedQty <= 1;
+  document.getElementById('qty-plus').disabled = state.selectedQty >= state.toolQty;
+}
+
+async function confirmCheckout() {
+  const btn = document.getElementById('btn-confirm');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner sm"></div>';
+
+  const ok = await postCheckout();
+
+  if (ok) {
+    const now = new Date();
+    document.getElementById('success-name').textContent = state.userName;
+    document.getElementById('success-tool').textContent = state.toolName;
+    document.getElementById('success-qty').textContent = `${state.selectedQty} יחידות`;
+    document.getElementById('success-time').textContent =
+      now.toLocaleDateString('he-IL') + ' ' +
+      now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+    showScreen('screen-success');
+  } else {
+    showToast('שגיאה ברישום — נסה שוב');
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> אשר השאלה';
+  }
+}
+
+function restart() {
+  document.getElementById('name-input').value = '';
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-settings').style.display = 'none';
+  document.getElementById('btn-admin-panel').style.display = 'none';
+  state.userName = '';
+  state.isAdmin = false;
+  showScreen('screen-name');
+}
+
+// ──────────────────────────────────────
+// GOOGLE SHEETS / DEMO API
+// ──────────────────────────────────────
+async function checkIsAdmin(name) {
+  if (!state.scriptUrl) { showToast('הגדר את כתובת ה-Script תחילה'); return false; }
+  try {
+    const res = await fetch(`${state.scriptUrl}?action=isAdmin&name=${encodeURIComponent(name)}`, { redirect: 'follow' });
+    const data = await res.json();
+    if (data.error) showToast(`שגיאת מנהל: ${data.error}`);
+    return data.admin === true;
+  } catch (err) {
+    showToast('לא ניתן לבדוק הרשאות — בדוק חיבור');
+    return false;
+  }
+}
+
+async function fetchTool(id) {
+  if (!state.scriptUrl) { showToast('הגדר את כתובת ה-Script תחילה'); return null; }
+  try {
+    const res = await fetch(`${state.scriptUrl}?action=getTool&id=${encodeURIComponent(id)}`, { redirect: 'follow' });
+    return await res.json();
+  } catch { return null; }
+}
+
+async function fetchTools() {
+  if (!state.scriptUrl) { showToast('הגדר את כתובת ה-Script תחילה'); return []; }
+  try {
+    const res = await fetch(`${state.scriptUrl}?action=getTools`, { redirect: 'follow' });
+    return await res.json();
+  } catch { return []; }
+}
+
+async function postCheckout() {
+  if (!state.scriptUrl) return false;
+  try {
+    const res = await fetch(state.scriptUrl, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'checkout',
+        userName: state.userName,
+        toolId: state.toolId,
+        toolName: state.toolName,
+        qty: state.selectedQty,
+      }),
+    });
+    const data = await res.json();
+    return data.ok;
+  } catch { return false; }
+}
+
+async function postAddTool(name, qty) {
+  if (!state.scriptUrl) return { ok: false };
+  try {
+    const res = await fetch(state.scriptUrl, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'addTool', name, qty }),
+    });
+    return await res.json();
+  } catch { return { ok: false }; }
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ──────────────────────────────────────
+// ADMIN MODAL
+// ──────────────────────────────────────
+let cachedTools = null;
+
+async function openAdminModal() {
+  document.getElementById('admin-modal').classList.add('open');
+  switchAdminTab('list');
+  await loadAdminTools();
+}
+
+function closeAdminModal() {
+  document.getElementById('admin-modal').classList.remove('open');
+}
+
+async function loadAdminTools() {
+  const listEl = document.getElementById('admin-tool-list');
+  listEl.innerHTML = '<div class="spinner" style="padding:20px 0;"></div>';
+  const tools = await fetchTools();
+  cachedTools = tools;
+
+  if (!tools || tools.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;">אין כלים ברשימה</div>';
+    return;
+  }
+
+  listEl.innerHTML = tools.map(t => `
+    <div class="admin-tool-item">
+      <div class="admin-tool-info">
+        <div class="admin-tool-name">${escapeHtml(t.name)}</div>
+        <div class="admin-tool-qty">מלאי: ${t.qty} יחידות</div>
+      </div>
+      <button class="qr-preview-btn" onclick="showQRForTool('${escapeHtml(String(t.id))}','${escapeHtml(t.name)}')">QR</button>
+    </div>
+  `).join('');
+
+  // Populate QR dropdown
+  const sel = document.getElementById('qr-tool-select');
+  sel.innerHTML = '<option value="">— בחר כלי —</option>' +
+    tools.map(t =>
+      `<option value="${escapeHtml(String(t.id))}" data-name="${escapeHtml(t.name)}">${escapeHtml(t.name)}</option>`
+    ).join('');
+}
+
+function switchAdminTab(tab) {
+  ['list','add','qr'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`tab-${t}-content`).style.display = t === tab ? '' : 'none';
+  });
+}
+
+function showQRForTool(id, name) {
+  switchAdminTab('qr');
+  const sel = document.getElementById('qr-tool-select');
+  sel.value = id;
+  generateQRPreview();
+}
+
+function generateQRPreview() {
+  const sel = document.getElementById('qr-tool-select');
+  const id = sel.value;
+  if (!id) { document.getElementById('qr-output').style.display = 'none'; return; }
+  const name = sel.options[sel.selectedIndex].dataset.name;
+
+  document.getElementById('qr-output').style.display = 'block';
+  document.getElementById('qr-tool-label').textContent = name;
+
+  const container = document.getElementById('qr-canvas');
+  container.innerHTML = '';
+  new QRCode(container, {
+    text: `TOOL:${id}`,
+    width: 220, height: 220,
+    colorDark: '#1e1e2e', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H,
+  });
+}
+
+function downloadQR() {
+  const name = document.getElementById('qr-tool-label').textContent;
+  const canvas = document.querySelector('#qr-canvas canvas');
+  if (canvas) {
+    const link = document.createElement('a');
+    link.download = `QR-${name}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    return;
+  }
+  // Fallback for img-based QR
+  const img = document.querySelector('#qr-canvas img');
+  if (img) {
+    const link = document.createElement('a');
+    link.download = `QR-${name}.png`;
+    link.href = img.src;
+    link.click();
+  }
+}
+
+// ──────────────────────────────────────
+// ADD TOOL
+// ──────────────────────────────────────
+async function addNewTool() {
+  const nameEl = document.getElementById('add-tool-name');
+  const qtyEl  = document.getElementById('add-tool-qty');
+  const btn    = document.getElementById('btn-add-tool');
+  const result = document.getElementById('add-tool-result');
+
+  const name = nameEl.value.trim();
+  const qty  = parseInt(qtyEl.value, 10);
+
+  if (!name) { showToast('הכנס שם לכלי'); return; }
+  if (!qty || qty < 1) { showToast('הכנס כמות תקינה'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner sm"></div>';
+  result.style.display = 'none';
+
+  const data = await postAddTool(name, qty);
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> הוסף לרשימה';
+
+  if (data && data.ok) {
+    const newId = data.id || name;
+    result.style.display = 'block';
+    result.innerHTML = `
+      <div style="background:var(--success-light);border-radius:var(--radius-sm);padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
+        <div style="font-weight:700;color:var(--success);">✓ הכלי נוסף בהצלחה</div>
+        <div style="font-size:13px;color:var(--text-muted);">שם: <strong>${escapeHtml(name)}</strong> · מזהה: <strong>${escapeHtml(newId)}</strong></div>
+        <button class="qr-preview-btn" style="align-self:flex-start;" onclick="showQRForTool('${escapeHtml(newId)}','${escapeHtml(name)}')">צור QR לכלי זה</button>
+      </div>
+    `;
+    nameEl.value = '';
+    qtyEl.value = '1';
+    // Reload list in background
+    loadAdminTools();
+  } else {
+    showToast('שגיאה בהוספת הכלי — נסה שוב');
+  }
+}
+
+// ──────────────────────────────────────
+// SETUP MODAL
+// ──────────────────────────────────────
+function openSetup() {
+  document.getElementById('setup-url-input').value = state.scriptUrl || '';
+  const connected = !!state.scriptUrl && !state.demoMode;
+  const statusEl = document.getElementById('setup-conn-status');
+  statusEl.className = 'conn-status ' + (connected ? 'connected' : 'disconnected');
+  document.getElementById('setup-conn-text').textContent = connected ? 'מחובר ל-Google Sheets' : 'לא מחובר';
+  document.getElementById('setup-modal').classList.add('open');
+}
+
+function closeSetup() {
+  document.getElementById('setup-modal').classList.remove('open');
+}
+
+function saveSetup() {
+  const url = document.getElementById('setup-url-input').value.trim();
+  if (!url.includes('script.google.com')) {
+    showToast('כתובת URL לא תקינה');
+    return;
+  }
+  state.scriptUrl = url;
+  state.demoMode = false;
+  localStorage.setItem('scriptUrl', url);
+  showToast('הגדרות נשמרו ✓');
+  closeSetup();
+}
+
+// ──────────────────────────────────────
+// UTILS
+// ──────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ──────────────────────────────────────
+// INIT
+// ──────────────────────────────────────
+window.addEventListener('load', () => {});
+
+document.getElementById('admin-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAdminModal();
+});
+document.getElementById('setup-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeSetup();
+});
+</script>
+</body>
+</html>
