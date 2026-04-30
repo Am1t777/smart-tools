@@ -6,7 +6,7 @@
 <title>מחסן כלים</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -190,22 +190,40 @@
   /* ── SCREEN 2: SCANNER ── */
   .scan-frame-wrapper {
     position: relative;
-    width: 100%; max-width: 340px; margin: 0 auto;
-  }
-  #qr-reader {
-    width: 100% !important;
-    border-radius: var(--radius) !important;
+    width: 100%;
+    border-radius: var(--radius);
     overflow: hidden;
-    border: none !important;
+    background: #000;
   }
-  #qr-reader video { border-radius: var(--radius); }
-  #qr-reader__scan_region { border-radius: var(--radius) !important; }
-  #qr-reader__scan_region img { display: none !important; }
-  #qr-reader__dashboard { display: none !important; }
+  #scan-video {
+    width: 100%; display: block;
+  }
+  .scan-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .scan-zone {
+    position: relative;
+    width: 200px; height: 200px;
+    box-shadow: 0 0 0 9999px oklch(0% 0 0 / 0.4);
+    border-radius: 4px;
+  }
+  .scan-corner {
+    position: absolute;
+    width: 24px; height: 24px;
+    border-color: #fff;
+    border-style: solid;
+    border-width: 3px;
+  }
+  .scan-corner.tl { top: -1px; left: -1px; border-right: none; border-bottom: none; border-radius: 4px 0 0 0; }
+  .scan-corner.tr { top: -1px; right: -1px; border-left: none; border-bottom: none; border-radius: 0 4px 0 0; }
+  .scan-corner.bl { bottom: -1px; left: -1px; border-right: none; border-top: none; border-radius: 0 0 0 4px; }
+  .scan-corner.br { bottom: -1px; right: -1px; border-left: none; border-top: none; border-radius: 0 0 4px 0; }
 
   .scan-status {
     display: flex; align-items: center; gap: 10px;
-    padding: 14px 18px;
+    padding: 12px 18px;
     background: var(--surface);
     border-radius: 999px;
     font-size: 14px; font-weight: 600;
@@ -213,23 +231,24 @@
     box-shadow: var(--shadow);
   }
   .status-dot {
-    width: 10px; height: 10px; border-radius: 50%;
+    width: 9px; height: 9px; border-radius: 50%;
     background: var(--success);
+    flex-shrink: 0;
     animation: pulse 1.5s ease-in-out infinite;
   }
   @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.8); }
+    50% { opacity: 0.45; transform: scale(0.75); }
   }
 
-  /* ── SCREEN 3: QUANTITY ── */
+  /* ── SCREEN 3: CONFIRM ── */
   .tool-card {
     background: var(--surface); border-radius: var(--radius);
     padding: 20px; border: 1px solid var(--border);
     box-shadow: var(--shadow);
   }
   .tool-card-header {
-    display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 14px;
   }
   .tool-icon {
     width: 52px; height: 52px; border-radius: 14px;
@@ -239,39 +258,14 @@
   }
   .tool-icon svg { width: 26px; height: 26px; fill: var(--accent); }
   .tool-name { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
-  .tool-stock {
-    font-size: 13px; color: var(--text-muted); margin-top: 3px;
-  }
+  .tool-stock { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
   .stock-badge {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 4px 10px; border-radius: 999px;
     font-size: 12px; font-weight: 600;
     background: var(--success-light); color: var(--success);
   }
-  .stock-badge.low { background: oklch(94% 0.05 50); color: var(--accent); }
-  .stock-badge.empty { background: var(--danger-light); color: var(--danger); }
-
-  .qty-row {
-    display: flex; align-items: center; gap: 12px;
-    margin-top: 8px;
-  }
-  .qty-btn {
-    width: 52px; height: 52px; border-radius: 14px;
-    border: 2px solid var(--border);
-    background: var(--surface);
-    font-size: 24px; font-weight: 300; color: var(--text);
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s; flex-shrink: 0;
-  }
-  .qty-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .qty-btn:active { transform: scale(0.95); }
-  .qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-  .qty-display {
-    flex: 1; text-align: center;
-    font-size: 42px; font-weight: 800;
-    color: var(--text); letter-spacing: -1px;
-  }
-  .qty-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+  .stock-badge.taken { background: var(--danger-light); color: var(--danger); }
 
   /* ── SCREEN 4: SUCCESS ── */
   .success-icon {
@@ -338,13 +332,13 @@
   }
   .tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
 
-  /* ── ADMIN TOOL LIST ── */
+  /* ── CHECKOUT / TOOL LIST ITEMS ── */
   .admin-tool-item {
     display: flex; align-items: center; gap: 14px;
     padding: 14px 0; border-bottom: 1px solid var(--border);
   }
   .admin-tool-item:last-child { border-bottom: none; }
-  .admin-tool-info { flex: 1; }
+  .admin-tool-info { flex: 1; min-width: 0; }
   .admin-tool-name { font-size: 15px; font-weight: 700; }
   .admin-tool-qty { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
   .qr-preview-btn {
@@ -354,15 +348,20 @@
     font-family: 'Heebo', sans-serif;
     font-size: 13px; font-weight: 600;
     cursor: pointer; transition: all 0.15s;
-    white-space: nowrap;
+    white-space: nowrap; flex-shrink: 0;
   }
   .qr-preview-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
-
-  /* ── QR OUTPUT ── */
-  .qr-canvas-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-  #qr-canvas canvas, #qr-canvas img { border-radius: 12px; }
-  .qr-label { font-size: 18px; font-weight: 700; text-align: center; }
-  .qr-id { font-size: 12px; color: var(--text-muted); text-align: center; }
+  .return-btn {
+    padding: 8px 14px; border-radius: var(--radius-sm);
+    background: var(--danger-light); color: var(--danger);
+    border: 1.5px solid oklch(85% 0.06 25);
+    font-family: 'Heebo', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .return-btn:hover { background: var(--danger); color: white; border-color: var(--danger); }
+  .return-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
   /* ── CONNECTION STATUS ── */
   .conn-status {
@@ -377,11 +376,6 @@
   .conn-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
   .conn-status.connected .conn-dot { background: var(--success); }
   .conn-status.disconnected .conn-dot { background: var(--danger); }
-
-  /* ── DIVIDER ── */
-  .divider {
-    height: 1px; background: var(--border); margin: 4px 0;
-  }
 
   /* ── LOADING ── */
   .spinner {
@@ -453,7 +447,21 @@
           placeholder="ישראל ישראלי"
           autocomplete="name"
           onkeyup="checkNameInput()"
+          onkeydown="if(event.key==='Enter')document.getElementById('id-input').focus()"
+        >
+      </div>
+      <div class="input-group">
+        <div class="input-label">תעודת זהות</div>
+        <input
+          class="input-field"
+          id="id-input"
+          type="tel"
+          placeholder="000000000"
+          inputmode="numeric"
+          maxlength="9"
+          onkeyup="checkNameInput()"
           onkeydown="if(event.key==='Enter')startScan()"
+          style="letter-spacing: 2px;"
         >
       </div>
     </div>
@@ -495,19 +503,19 @@
   </div>
 
   <div class="content-center" style="gap:20px;">
-    <div>
+    <div id="scanner-heading">
       <div class="screen-heading">סרוק את ה-QR</div>
       <div class="screen-sub" style="margin-top:8px;">כוון את מצלמת הטלפון אל קוד ה-QR המודבק על הכלי</div>
     </div>
 
     <!-- Camera permission prompt -->
     <div id="camera-prompt" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:300px;">
-      <div style="width:80px;height:80px;border-radius:50%;background:var(--accent-light);display:flex;align-items:center;justify-content:center;">
-        <svg width="38" height="38" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 15.2A3.2 3.2 0 1 0 12 8.8a3.2 3.2 0 0 0 0 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+      <div style="width:72px;height:72px;border-radius:20px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 15.2A3.2 3.2 0 1 0 12 8.8a3.2 3.2 0 0 0 0 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
       </div>
       <div style="text-align:center;">
         <div style="font-size:17px;font-weight:700;">הפעל מצלמה</div>
-        <div style="font-size:14px;color:var(--text-muted);margin-top:6px;">נדרשת הרשאה כדי לאפשר את סריקת הכלים</div>
+        <div style="font-size:14px;color:var(--text-muted);margin-top:6px;">נדרשת הרשאה כדי לסרוק את הכלים</div>
       </div>
       <button class="btn btn-primary" style="max-width:240px;" onclick="activateCamera()">
         <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 15.2A3.2 3.2 0 1 0 12 8.8a3.2 3.2 0 0 0 0 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
@@ -515,32 +523,53 @@
       </button>
     </div>
 
-    <!-- Active scanner (shown after permission) -->
-    <div id="camera-active" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:340px;">
+    <!-- Active scanner -->
+    <div id="camera-active" style="display:none;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:320px;">
       <div class="scan-frame-wrapper">
-        <div id="qr-reader"></div>
+        <video id="scan-video" playsinline autoplay muted></video>
+        <div class="scan-overlay">
+          <div class="scan-zone">
+            <div class="scan-corner tl"></div>
+            <div class="scan-corner tr"></div>
+            <div class="scan-corner bl"></div>
+            <div class="scan-corner br"></div>
+          </div>
+        </div>
       </div>
+      <canvas id="scan-canvas" style="display:none;"></canvas>
       <div class="scan-status" id="scan-status">
         <div class="status-dot"></div>
         <span>ממתין לסריקה...</span>
       </div>
     </div>
 
-    <!-- Admin button (shown only for admins) -->
-    <button
-      class="btn btn-admin"
-      id="btn-admin-panel"
-      onclick="openAdminModal()"
-      style="display:none;max-width:260px;"
-    >
-      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5z"/></svg>
-      ניהול כלים (מנהל)
-    </button>
+    <!-- Buttons row (shown after camera activated) -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:260px;">
+      <!-- Admin panel button (admins only) -->
+      <button
+        class="btn btn-admin"
+        id="btn-admin-panel"
+        onclick="openAdminModal()"
+        style="display:none;"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5z"/></svg>
+        ניהול כלים (מנהל)
+      </button>
+      <!-- Checkouts viewer (all users) -->
+      <button
+        class="btn btn-ghost"
+        onclick="openCheckoutsModal()"
+        style="width:100%;"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+        כלים שנלקחו
+      </button>
+    </div>
   </div>
 </div>
 
 <!-- ─────────────────────────────────────
-     SCREEN 3 – QUANTITY
+     SCREEN 3 – CONFIRM CHECKOUT
 ───────────────────────────────────── -->
 <div id="screen-quantity" class="screen">
   <div class="header">
@@ -549,8 +578,8 @@
         <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
       </div>
       <div>
-        <div class="header-title">כמות השאלה</div>
-        <div class="header-subtitle">כמה יחידות תרצה לקחת?</div>
+        <div class="header-title" id="confirm-screen-title">אישור השאלה</div>
+        <div class="header-subtitle" id="confirm-screen-sub">אשר לפני לקיחת הכלי</div>
       </div>
     </div>
     <button class="icon-btn" onclick="goToScan()">
@@ -573,23 +602,25 @@
           </div>
           <div>
             <div class="tool-name" id="tool-name-display">טוען...</div>
-            <div class="tool-stock" id="tool-stock-badge"></div>
+            <div class="tool-stock" id="tool-stock-badge" style="margin-top:6px;"></div>
           </div>
         </div>
       </div>
 
-      <div>
-        <div class="qty-label">כמות לקיחה</div>
-        <div class="qty-row">
-          <button class="qty-btn" id="qty-minus" onclick="changeQty(-1)">−</button>
-          <div class="qty-display" id="qty-display">1</div>
-          <button class="qty-btn" id="qty-plus" onclick="changeQty(1)">+</button>
+      <div class="card" style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
+        <div class="summary-row">
+          <span class="label" style="font-size:14px;">שואל</span>
+          <span class="value" id="confirm-user-name" style="font-size:14px;">—</span>
+        </div>
+        <div class="summary-row">
+          <span class="label" style="font-size:14px;">תעודת זהות</span>
+          <span class="value" id="confirm-user-id" style="font-size:14px;letter-spacing:1px;">—</span>
         </div>
       </div>
     </div>
 
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <button class="btn btn-primary" id="btn-confirm" onclick="confirmCheckout()">
+      <button class="btn btn-primary" id="btn-confirm">
         <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
         אשר השאלה
       </button>
@@ -619,8 +650,8 @@
       <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
     </div>
     <div>
-      <div class="screen-heading">השאלה נרשמה!</div>
-      <div class="screen-sub" style="margin-top:8px;">הפרטים נשמרו והכלים מחכים לך במחסן</div>
+      <div class="screen-heading" id="success-heading">השאלה נרשמה!</div>
+      <div class="screen-sub" id="success-sub" style="margin-top:8px;">הפרטים נשמרו והכלי מחכה לך במחסן</div>
     </div>
 
     <div class="summary-card" style="width:100%;">
@@ -629,12 +660,12 @@
         <span class="value" id="success-name">—</span>
       </div>
       <div class="summary-row">
-        <span class="label">כלי</span>
-        <span class="value" id="success-tool">—</span>
+        <span class="label">תעודת זהות</span>
+        <span class="value" id="success-id" style="letter-spacing:1px;">—</span>
       </div>
       <div class="summary-row">
-        <span class="label">כמות שנלקחה</span>
-        <span class="value" id="success-qty">—</span>
+        <span class="label">כלי</span>
+        <span class="value" id="success-tool">—</span>
       </div>
       <div class="summary-row">
         <span class="label">תאריך ושעה</span>
@@ -672,9 +703,9 @@
     </div>
 
     <div class="tabs">
-      <button class="tab active" id="tab-list"    onclick="switchAdminTab('list')">רשימת כלים</button>
-      <button class="tab"        id="tab-add"     onclick="switchAdminTab('add')">הוסף כלי</button>
-      <button class="tab"        id="tab-qr"      onclick="switchAdminTab('qr')">צור QR</button>
+      <button class="tab active" id="tab-list"      onclick="switchAdminTab('list')">רשימת כלים</button>
+      <button class="tab"        id="tab-add"       onclick="switchAdminTab('add')">הוסף כלי</button>
+      <button class="tab"        id="tab-checkouts" onclick="switchAdminTab('checkouts')">כלים שנלקחו</button>
     </div>
 
     <!-- Tab 1: Tool list -->
@@ -691,10 +722,6 @@
           <div class="input-label">שם הכלי</div>
           <input class="input-field" id="add-tool-name" type="text" placeholder="לדוגמה: מברג פיליפס" style="font-size:16px;">
         </div>
-        <div class="input-group">
-          <div class="input-label">כמות התחלתית</div>
-          <input class="input-field" id="add-tool-qty" type="number" min="1" value="1" placeholder="1" style="font-size:16px;text-align:center;">
-        </div>
         <button class="btn btn-primary" id="btn-add-tool" onclick="addNewTool()">
           <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
           הוסף לרשימה
@@ -703,26 +730,29 @@
       </div>
     </div>
 
-    <!-- Tab 3: QR creator -->
-    <div id="tab-qr-content" style="display:none;">
-      <div style="display:flex;flex-direction:column;gap:14px;">
-        <div class="input-group">
-          <div class="input-label">בחר כלי מהרשימה</div>
-          <select class="input-field" id="qr-tool-select" onchange="generateQRPreview()" style="font-size:15px;">
-            <option value="">— בחר כלי —</option>
-          </select>
-        </div>
-        <div id="qr-output" style="display:none;">
-          <div class="card qr-canvas-wrapper" style="margin-top:4px;">
-            <div id="qr-canvas"></div>
-            <div class="qr-label" id="qr-tool-label">—</div>
-          </div>
-          <button class="btn btn-primary" style="margin-top:12px;" onclick="downloadQR()">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-            הורד QR
-          </button>
-        </div>
+    <!-- Tab 3: Checkouts (admin view with return buttons) -->
+    <div id="tab-checkouts-content" style="display:none;">
+      <div id="admin-checkouts-list">
+        <div class="spinner"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────
+     MODAL – CHECKOUTS (ALL USERS)
+───────────────────────────────────── -->
+<div class="modal-backdrop" id="checkouts-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-close-row">
+      <div class="modal-title" style="margin-bottom:0;">כלים שנלקחו</div>
+      <button class="icon-btn" onclick="closeCheckoutsModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="user-checkouts-list">
+      <div class="spinner"></div>
     </div>
   </div>
 </div>
@@ -757,6 +787,9 @@
   </div>
 </div>
 
+<!-- Hidden QR canvas for downloads -->
+<div id="qr-canvas" style="display:none;position:absolute;left:-9999px;"></div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -768,11 +801,11 @@ const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx-q9QdVnuHO
 
 let state = {
   userName: '',
+  userId: '',
   isAdmin: false,
   toolId: null,
   toolName: '',
-  toolQty: 0,
-  selectedQty: 1,
+  toolTakenBy: null, // null = available, string = name of person who has it
   scriptUrl: localStorage.getItem('scriptUrl') || DEFAULT_SCRIPT_URL,
 };
 
@@ -780,7 +813,6 @@ let state = {
 // SCREEN NAVIGATION
 // ──────────────────────────────────────
 let currentScreen = 'screen-name';
-let qrScanner = null;
 
 function showScreen(id) {
   const cur = document.getElementById(currentScreen);
@@ -797,19 +829,22 @@ function showScreen(id) {
 // SCREEN 1: NAME
 // ──────────────────────────────────────
 function checkNameInput() {
-  const val = document.getElementById('name-input').value.trim();
-  document.getElementById('btn-start').disabled = val.length < 2;
+  const name = document.getElementById('name-input').value.trim();
+  const id = document.getElementById('id-input').value.trim();
+  document.getElementById('btn-start').disabled = name.length < 2 || id.length < 5;
 }
 
 async function startScan() {
   const name = document.getElementById('name-input').value.trim();
-  if (name.length < 2) return;
+  const userId = document.getElementById('id-input').value.trim();
+  if (name.length < 2 || userId.length < 5) return;
 
   const btn = document.getElementById('btn-start');
   btn.disabled = true;
   btn.innerHTML = '<div class="spinner sm"></div>';
 
   state.userName = name;
+  state.userId = userId;
   state.isAdmin = await checkIsAdmin(name);
 
   btn.innerHTML = 'המשך לסריקה <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" transform="rotate(180 12 12)"/></svg>';
@@ -824,7 +859,7 @@ async function startScan() {
 }
 
 function goBack() {
-  stopScanner();
+  killScanner();
   showScreen('screen-name');
 }
 
@@ -836,103 +871,171 @@ function resetCameraPrompt() {
 function activateCamera() {
   document.getElementById('camera-prompt').style.display = 'none';
   document.getElementById('camera-active').style.display = 'flex';
+  document.getElementById('scan-status').innerHTML =
+    '<div class="status-dot"></div><span>ממתין לסריקה...</span>';
   initScanner();
 }
 
 // ──────────────────────────────────────
 // SCREEN 2: QR SCANNER
 // ──────────────────────────────────────
+let scanStream = null;
+let scanRaf = null;
+let scanActive = false;
+
 function initScanner() {
-  if (qrScanner) return;
-  const readerEl = document.getElementById('qr-reader');
-  readerEl.innerHTML = '';
-  qrScanner = new Html5Qrcode('qr-reader');
-  qrScanner.start(
-    { facingMode: 'environment' },
-    { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1 },
-    onQRScanned,
-    () => {}
-  ).catch(() => {
-    document.getElementById('scan-status').innerHTML =
-      '<span style="color:var(--danger);">לא ניתן לגשת למצלמה. בדוק הרשאות.</span>';
-  });
+  if (scanActive) return;
+  scanActive = true;
+
+  const video = document.getElementById('scan-video');
+  const canvas = document.getElementById('scan-canvas');
+  const ctx = canvas.getContext('2d');
+
+  const constraints = {
+    video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } }
+  };
+
+  canvas.width = 300;
+  canvas.height = 300;
+
+  if (scanStream) {
+    tickScan(video, canvas, ctx);
+    return;
+  }
+
+  navigator.mediaDevices.getUserMedia(constraints)
+    .then(stream => {
+      scanStream = stream;
+      video.srcObject = stream;
+      video.play().catch(() => {});
+      tickScan(video, canvas, ctx);
+    })
+    .catch(() => {
+      document.getElementById('scan-status').innerHTML =
+        '<span style="color:#ff8080;">לא ניתן לגשת למצלמה. בדוק הרשאות.</span>';
+      scanActive = false;
+    });
 }
 
-function stopScanner() {
-  if (qrScanner) {
-    qrScanner.stop().catch(() => {});
-    qrScanner = null;
+function tickScan(video, canvas, ctx) {
+  if (!scanActive) return;
+  if (video.readyState >= 2 && video.videoWidth > 0) {
+    // Crop to the scan zone so jsQR sees exactly what the visual box shows
+    const dw = video.clientWidth;
+    const dh = video.clientHeight;
+    const zoneSize = 200;
+    const zoneX = (dw - zoneSize) / 2;
+    const zoneY = (dh - zoneSize) / 2;
+    const scaleX = video.videoWidth / dw;
+    const scaleY = video.videoHeight / dh;
+    ctx.drawImage(video,
+      zoneX * scaleX, zoneY * scaleY, zoneSize * scaleX, zoneSize * scaleY,
+      0, 0, canvas.width, canvas.height
+    );
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'dontInvert',
+    });
+    if (code && code.data) {
+      pauseScanner();
+      onQRScanned(code.data);
+      return;
+    }
   }
+  scanRaf = requestAnimationFrame(() => tickScan(video, canvas, ctx));
+}
+
+function pauseScanner() {
+  scanActive = false;
+  if (scanRaf) { cancelAnimationFrame(scanRaf); scanRaf = null; }
+  // Stream stays alive for reuse
+}
+
+function killScanner() {
+  pauseScanner();
+  if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+  const video = document.getElementById('scan-video');
+  if (video) { video.srcObject = null; }
 }
 
 function goToScan() {
-  stopScanner();
+  pauseScanner();
   showScreen('screen-scanner');
-  setTimeout(resetCameraPrompt, 200);
+  if (scanStream) {
+    // Stream still alive — go straight to active camera
+    document.getElementById('camera-prompt').style.display = 'none';
+    document.getElementById('camera-active').style.display = 'flex';
+    document.getElementById('scan-status').innerHTML =
+      '<div class="status-dot"></div><span>ממתין לסריקה...</span>';
+    initScanner();
+  } else {
+    setTimeout(resetCameraPrompt, 200);
+  }
 }
 
 async function onQRScanned(text) {
-  stopScanner();
+  pauseScanner();
+  showToast('QR זוהה — טוען...');
   document.getElementById('scan-status').innerHTML =
     `<div class="spinner sm" style="margin:0;"></div><span>טוען פרטי כלי...</span>`;
   showScreen('screen-quantity');
 
   const toolId = text.startsWith('TOOL:') ? text.slice(5) : text;
+
+  document.getElementById('tool-name-display').textContent = 'טוען...';
+  document.getElementById('tool-stock-badge').innerHTML = '';
+  document.getElementById('btn-confirm').disabled = true;
+
   const tool = await fetchTool(toolId);
 
   if (!tool || tool.error) {
-    showToast('הכלי לא נמצא — בדוק את קוד ה-QR');
-    goToScan();
+    document.getElementById('tool-name-display').textContent = 'שגיאה';
+    document.getElementById('tool-stock-badge').innerHTML =
+      `<div style="color:var(--danger);font-size:14px;margin-top:8px;">
+        הכלי לא נמצא (${escapeHtml(toolId)})<br>
+        <small style="color:var(--text-muted);">בדוק שה-URL של הסקריפט מוגדר ושה-QR תקין</small>
+       </div>
+       <button class="btn btn-outline" style="margin-top:14px;" onclick="goToScan()">נסה שוב</button>`;
     return;
   }
 
   state.toolId = tool.id;
   state.toolName = tool.name;
-  state.toolQty = Number(tool.qty);
-  state.selectedQty = 1;
+  state.toolTakenBy = tool.takenBy || null;
 
-  renderToolCard();
+  renderConfirmCard();
 }
 
 // ──────────────────────────────────────
-// SCREEN 3: QUANTITY
+// SCREEN 3: CONFIRM
 // ──────────────────────────────────────
-function renderToolCard() {
+function renderConfirmCard() {
   document.getElementById('tool-name-display').textContent = state.toolName;
-  document.getElementById('btn-confirm').disabled = false;
+  document.getElementById('confirm-user-name').textContent = state.userName;
+  document.getElementById('confirm-user-id').textContent = state.userId;
 
-  const qty = state.toolQty;
-  let badgeClass = 'stock-badge';
-  let badgeText = '';
-  if (qty <= 0) {
-    badgeClass += ' empty';
-    badgeText = '✕ אין מלאי';
-    document.getElementById('btn-confirm').disabled = true;
-  } else if (qty <= 3) {
-    badgeClass += ' low';
-    badgeText = `⚠ ${qty} יחידות נותרו`;
+  const btn = document.getElementById('btn-confirm');
+  const taken = state.toolTakenBy;
+
+  if (taken) {
+    document.getElementById('tool-stock-badge').innerHTML =
+      `<span class="stock-badge taken">✕ לקוח על ידי ${escapeHtml(taken)}</span>`;
+    document.getElementById('confirm-screen-title').textContent = 'החזרת כלי';
+    document.getElementById('confirm-screen-sub').textContent = 'הכלי כבר לקוח — אשר להחזרתו';
+    btn.disabled = false;
+    btn.style.background = 'var(--danger)';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> החזר כלי';
+    btn.onclick = confirmReturn;
   } else {
-    badgeText = `✓ ${qty} יחידות במלאי`;
+    document.getElementById('tool-stock-badge').innerHTML =
+      `<span class="stock-badge">✓ זמין לשאלה</span>`;
+    document.getElementById('confirm-screen-title').textContent = 'אישור השאלה';
+    document.getElementById('confirm-screen-sub').textContent = 'אשר לפני לקיחת הכלי';
+    btn.disabled = false;
+    btn.style.background = '';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> אשר השאלה';
+    btn.onclick = confirmCheckout;
   }
-
-  document.getElementById('tool-stock-badge').innerHTML =
-    `<span class="${badgeClass}">${badgeText}</span>`;
-
-  document.getElementById('qty-display').textContent = state.selectedQty;
-  updateQtyButtons();
-}
-
-function changeQty(delta) {
-  const next = state.selectedQty + delta;
-  if (next < 1 || next > state.toolQty) return;
-  state.selectedQty = next;
-  document.getElementById('qty-display').textContent = next;
-  updateQtyButtons();
-}
-
-function updateQtyButtons() {
-  document.getElementById('qty-minus').disabled = state.selectedQty <= 1;
-  document.getElementById('qty-plus').disabled = state.selectedQty >= state.toolQty;
 }
 
 async function confirmCheckout() {
@@ -944,9 +1047,11 @@ async function confirmCheckout() {
 
   if (ok) {
     const now = new Date();
+    document.getElementById('success-heading').textContent = 'השאלה נרשמה!';
+    document.getElementById('success-sub').textContent = 'הפרטים נשמרו והכלי מחכה לך במחסן';
     document.getElementById('success-name').textContent = state.userName;
+    document.getElementById('success-id').textContent = state.userId;
     document.getElementById('success-tool').textContent = state.toolName;
-    document.getElementById('success-qty').textContent = `${state.selectedQty} יחידות`;
     document.getElementById('success-time').textContent =
       now.toLocaleDateString('he-IL') + ' ' +
       now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
@@ -958,18 +1063,45 @@ async function confirmCheckout() {
   }
 }
 
+async function confirmReturn() {
+  const btn = document.getElementById('btn-confirm');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner sm"></div>';
+
+  const ok = await postReturnTool(state.toolId);
+
+  if (ok) {
+    const now = new Date();
+    document.getElementById('success-heading').textContent = 'הכלי הוחזר!';
+    document.getElementById('success-sub').textContent = 'ההחזרה נרשמה בהצלחה';
+    document.getElementById('success-name').textContent = state.toolTakenBy;
+    document.getElementById('success-id').textContent = '—';
+    document.getElementById('success-tool').textContent = state.toolName;
+    document.getElementById('success-time').textContent =
+      now.toLocaleDateString('he-IL') + ' ' +
+      now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+    showScreen('screen-success');
+  } else {
+    showToast('שגיאה בהחזרה — נסה שוב');
+    btn.disabled = false;
+    renderConfirmCard();
+  }
+}
+
 function restart() {
   document.getElementById('name-input').value = '';
+  document.getElementById('id-input').value = '';
   document.getElementById('btn-start').disabled = true;
   document.getElementById('btn-settings').style.display = 'none';
   document.getElementById('btn-admin-panel').style.display = 'none';
   state.userName = '';
+  state.userId = '';
   state.isAdmin = false;
   showScreen('screen-name');
 }
 
 // ──────────────────────────────────────
-// GOOGLE SHEETS / DEMO API
+// API
 // ──────────────────────────────────────
 async function checkIsAdmin(name) {
   if (!state.scriptUrl) { showToast('הגדר את כתובת ה-Script תחילה'); return false; }
@@ -978,7 +1110,7 @@ async function checkIsAdmin(name) {
     const data = await res.json();
     if (data.error) showToast(`שגיאת מנהל: ${data.error}`);
     return data.admin === true;
-  } catch (err) {
+  } catch {
     showToast('לא ניתן לבדוק הרשאות — בדוק חיבור');
     return false;
   }
@@ -1000,6 +1132,14 @@ async function fetchTools() {
   } catch { return []; }
 }
 
+async function fetchCheckouts() {
+  if (!state.scriptUrl) return [];
+  try {
+    const res = await fetch(`${state.scriptUrl}?action=getCheckouts`, { redirect: 'follow' });
+    return await res.json();
+  } catch { return []; }
+}
+
 async function postCheckout() {
   if (!state.scriptUrl) return false;
   try {
@@ -1010,9 +1150,9 @@ async function postCheckout() {
       body: JSON.stringify({
         action: 'checkout',
         userName: state.userName,
+        userId: state.userId,
         toolId: state.toolId,
         toolName: state.toolName,
-        qty: state.selectedQty,
       }),
     });
     const data = await res.json();
@@ -1020,26 +1160,93 @@ async function postCheckout() {
   } catch { return false; }
 }
 
-async function postAddTool(name, qty) {
+async function postReturnTool(toolId) {
+  if (!state.scriptUrl) return false;
+  try {
+    const res = await fetch(state.scriptUrl, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'returnTool', toolId }),
+    });
+    const data = await res.json();
+    return data.ok;
+  } catch { return false; }
+}
+
+async function postAddTool(name) {
   if (!state.scriptUrl) return { ok: false };
   try {
     const res = await fetch(state.scriptUrl, {
       method: 'POST',
       redirect: 'follow',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'addTool', name, qty }),
+      body: JSON.stringify({ action: 'addTool', name }),
     });
     return await res.json();
   } catch { return { ok: false }; }
 }
 
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+// ──────────────────────────────────────
+// CHECKOUTS MODAL (ALL USERS)
+// ──────────────────────────────────────
+async function openCheckoutsModal() {
+  document.getElementById('checkouts-modal').classList.add('open');
+  await loadUserCheckouts();
+}
+
+function closeCheckoutsModal() {
+  document.getElementById('checkouts-modal').classList.remove('open');
+}
+
+async function loadUserCheckouts() {
+  const listEl = document.getElementById('user-checkouts-list');
+  listEl.innerHTML = '<div class="spinner" style="padding:20px 0;"></div>';
+  const rows = await fetchCheckouts();
+  renderCheckoutRows(rows, listEl, state.isAdmin, () => loadUserCheckouts());
+}
+
+function renderCheckoutRows(rows, listEl, showReturn, onReload) {
+  if (!rows || rows.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;">אין כלים שנלקחו כרגע</div>';
+    return;
+  }
+  listEl.innerHTML = rows.slice().reverse().map((r, i) => `
+    <div class="admin-tool-item" id="checkout-row-${i}">
+      <div class="admin-tool-info">
+        <div class="admin-tool-name">${escapeHtml(r.toolName)}</div>
+        <div class="admin-tool-qty">${escapeHtml(r.userName)} · ${escapeHtml(r.date)}</div>
+      </div>
+      ${showReturn ? `<button class="return-btn" onclick="handleReturn('${escapeHtml(r.toolId)}', this, ${i})">החזר</button>` : ''}
+    </div>
+  `).join('');
+
+  if (showReturn) {
+    listEl._rows = rows.slice().reverse();
+    listEl._onReload = onReload;
+  }
+}
+
+async function handleReturn(toolId, btn, idx) {
+  btn.disabled = true;
+  btn.textContent = '...';
+  const ok = await postReturnTool(toolId);
+  if (ok) {
+    showToast('הכלי סומן כהוחזר ✓');
+    const container = btn.closest('[id$="-list"]') || btn.closest('.modal-sheet').querySelector('[id$="-list"]');
+    if (container && container._onReload) {
+      container._onReload();
+    }
+  } else {
+    showToast('שגיאה — נסה שוב');
+    btn.disabled = false;
+    btn.textContent = 'החזר';
+  }
+}
 
 // ──────────────────────────────────────
 // ADMIN MODAL
 // ──────────────────────────────────────
-let cachedTools = null;
-
 async function openAdminModal() {
   document.getElementById('admin-modal').classList.add('open');
   switchAdminTab('list');
@@ -1054,7 +1261,6 @@ async function loadAdminTools() {
   const listEl = document.getElementById('admin-tool-list');
   listEl.innerHTML = '<div class="spinner" style="padding:20px 0;"></div>';
   const tools = await fetchTools();
-  cachedTools = tools;
 
   if (!tools || tools.length === 0) {
     listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;">אין כלים ברשימה</div>';
@@ -1065,43 +1271,33 @@ async function loadAdminTools() {
     <div class="admin-tool-item">
       <div class="admin-tool-info">
         <div class="admin-tool-name">${escapeHtml(t.name)}</div>
-        <div class="admin-tool-qty">מלאי: ${t.qty} יחידות</div>
+        <div class="admin-tool-qty" style="font-size:12px;">
+          ציוד: ${escapeHtml(String(t.tziyud || '—'))} &nbsp;·&nbsp;
+          חומר: ${escapeHtml(String(t.chomer || '—'))} &nbsp;·&nbsp;
+          מס' סידורי: ${escapeHtml(String(t.serial || '—'))}
+        </div>
       </div>
-      <button class="qr-preview-btn" onclick="showQRForTool('${escapeHtml(String(t.id))}','${escapeHtml(t.name)}')">QR</button>
+      <button class="qr-preview-btn" onclick="downloadQRForTool('${escapeHtml(String(t.id))}','${escapeHtml(t.name)}')">הורד QR</button>
     </div>
   `).join('');
-
-  // Populate QR dropdown
-  const sel = document.getElementById('qr-tool-select');
-  sel.innerHTML = '<option value="">— בחר כלי —</option>' +
-    tools.map(t =>
-      `<option value="${escapeHtml(String(t.id))}" data-name="${escapeHtml(t.name)}">${escapeHtml(t.name)}</option>`
-    ).join('');
 }
 
 function switchAdminTab(tab) {
-  ['list','add','qr'].forEach(t => {
+  ['list','add','checkouts'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
     document.getElementById(`tab-${t}-content`).style.display = t === tab ? '' : 'none';
   });
+  if (tab === 'checkouts') loadAdminCheckouts();
 }
 
-function showQRForTool(id, name) {
-  switchAdminTab('qr');
-  const sel = document.getElementById('qr-tool-select');
-  sel.value = id;
-  generateQRPreview();
+async function loadAdminCheckouts() {
+  const listEl = document.getElementById('admin-checkouts-list');
+  listEl.innerHTML = '<div class="spinner" style="padding:20px 0;"></div>';
+  const rows = await fetchCheckouts();
+  renderCheckoutRows(rows, listEl, true, () => loadAdminCheckouts());
 }
 
-function generateQRPreview() {
-  const sel = document.getElementById('qr-tool-select');
-  const id = sel.value;
-  if (!id) { document.getElementById('qr-output').style.display = 'none'; return; }
-  const name = sel.options[sel.selectedIndex].dataset.name;
-
-  document.getElementById('qr-output').style.display = 'block';
-  document.getElementById('qr-tool-label').textContent = name;
-
+function downloadQRForTool(id, name) {
   const container = document.getElementById('qr-canvas');
   container.innerHTML = '';
   new QRCode(container, {
@@ -1110,26 +1306,14 @@ function generateQRPreview() {
     colorDark: '#1e1e2e', colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.H,
   });
-}
-
-function downloadQR() {
-  const name = document.getElementById('qr-tool-label').textContent;
-  const canvas = document.querySelector('#qr-canvas canvas');
-  if (canvas) {
+  setTimeout(() => {
+    const canvas = container.querySelector('canvas');
+    const img = container.querySelector('img');
     const link = document.createElement('a');
     link.download = `QR-${name}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.href = canvas ? canvas.toDataURL('image/png') : img.src;
     link.click();
-    return;
-  }
-  // Fallback for img-based QR
-  const img = document.querySelector('#qr-canvas img');
-  if (img) {
-    const link = document.createElement('a');
-    link.download = `QR-${name}.png`;
-    link.href = img.src;
-    link.click();
-  }
+  }, 100);
 }
 
 // ──────────────────────────────────────
@@ -1137,21 +1321,17 @@ function downloadQR() {
 // ──────────────────────────────────────
 async function addNewTool() {
   const nameEl = document.getElementById('add-tool-name');
-  const qtyEl  = document.getElementById('add-tool-qty');
   const btn    = document.getElementById('btn-add-tool');
   const result = document.getElementById('add-tool-result');
 
   const name = nameEl.value.trim();
-  const qty  = parseInt(qtyEl.value, 10);
-
   if (!name) { showToast('הכנס שם לכלי'); return; }
-  if (!qty || qty < 1) { showToast('הכנס כמות תקינה'); return; }
 
   btn.disabled = true;
   btn.innerHTML = '<div class="spinner sm"></div>';
   result.style.display = 'none';
 
-  const data = await postAddTool(name, qty);
+  const data = await postAddTool(name);
 
   btn.disabled = false;
   btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> הוסף לרשימה';
@@ -1163,12 +1343,10 @@ async function addNewTool() {
       <div style="background:var(--success-light);border-radius:var(--radius-sm);padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
         <div style="font-weight:700;color:var(--success);">✓ הכלי נוסף בהצלחה</div>
         <div style="font-size:13px;color:var(--text-muted);">שם: <strong>${escapeHtml(name)}</strong> · מזהה: <strong>${escapeHtml(newId)}</strong></div>
-        <button class="qr-preview-btn" style="align-self:flex-start;" onclick="showQRForTool('${escapeHtml(newId)}','${escapeHtml(name)}')">צור QR לכלי זה</button>
+        <button class="qr-preview-btn" style="align-self:flex-start;" onclick="downloadQRForTool('${escapeHtml(newId)}','${escapeHtml(name)}')">הורד QR לכלי זה</button>
       </div>
     `;
     nameEl.value = '';
-    qtyEl.value = '1';
-    // Reload list in background
     loadAdminTools();
   } else {
     showToast('שגיאה בהוספת הכלי — נסה שוב');
@@ -1180,7 +1358,7 @@ async function addNewTool() {
 // ──────────────────────────────────────
 function openSetup() {
   document.getElementById('setup-url-input').value = state.scriptUrl || '';
-  const connected = !!state.scriptUrl && !state.demoMode;
+  const connected = !!state.scriptUrl;
   const statusEl = document.getElementById('setup-conn-status');
   statusEl.className = 'conn-status ' + (connected ? 'connected' : 'disconnected');
   document.getElementById('setup-conn-text').textContent = connected ? 'מחובר ל-Google Sheets' : 'לא מחובר';
@@ -1198,7 +1376,6 @@ function saveSetup() {
     return;
   }
   state.scriptUrl = url;
-  state.demoMode = false;
   localStorage.setItem('scriptUrl', url);
   showToast('הגדרות נשמרו ✓');
   closeSetup();
@@ -1235,6 +1412,9 @@ document.getElementById('admin-modal').addEventListener('click', function(e) {
 });
 document.getElementById('setup-modal').addEventListener('click', function(e) {
   if (e.target === this) closeSetup();
+});
+document.getElementById('checkouts-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeCheckoutsModal();
 });
 </script>
 </body>
